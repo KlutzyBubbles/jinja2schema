@@ -60,6 +60,8 @@ class Config(object):
     Use a separate counter in subsections as order number creator.
     """
 
+    CUSTOM_FILTERS = []
+
     def __init__(self,
                  TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE='dictionary',
                  TYPE_OF_VARIABLE_INDEXED_WITH_INTEGER_TYPE='list',
@@ -67,7 +69,8 @@ class Config(object):
                  PACKAGE_NAME='',
                  TEMPLATE_DIR='templates',
                  ORDER_NUMBER=False,
-                 ORDER_NUMBER_SUB_COUNTER=True):
+                 ORDER_NUMBER_SUB_COUNTER=True,
+                 CUSTOM_FILTERS=[]):
         if TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE not in ('dictionary', 'list'):
             raise ValueError('TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE must be'
                              'either "dictionary" or "list"')
@@ -82,6 +85,7 @@ class Config(object):
         self.ORDER_NUMBER = ORDER_NUMBER
         self.ORDER_OBJECT = OrderNumber(number=1, enabled=self.ORDER_NUMBER,
                                         sub_counter_enabled=ORDER_NUMBER_SUB_COUNTER)
+        self.CUSTOM_FILTERS = CUSTOM_FILTERS
 
 
 default_config = Config()

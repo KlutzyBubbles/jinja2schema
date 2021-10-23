@@ -7,6 +7,7 @@ Expression is an instance of :class:`jinja2.nodes.Expr`.
 Expression visitors return a tuple which contains expression type and expression structure.
 """
 import functools
+from inspect import getargspec
 
 from jinja2 import nodes
 
@@ -526,7 +527,20 @@ def visit_filter(ast, ctx, macroses=None, config=default_config):
     elif ast.name == 'attr':
         raise InvalidExpression(ast, 'attr filter is not supported')
     else:
-        raise InvalidExpression(ast, 'unknown filter')
+        has_filter = False
+        for filter_obj in config.CUSTOM_FILTERS:
+            filters_to_search = filter_obj.filters()
+            for name, func in filters_to_search:
+                if name == ast.name:
+                    has_filter = True
+                    arg_count = len(getargspec(someMethod)[0])
+                    if arg_count < 1:
+                        raise InvalidExpression(ast, 'Filter ' + name + ' needs at least 1 argument')
+                    else:
+                        node_struct = ctx.get_predicted_struct()
+                    break
+        if not has_filter:
+          raise InvalidExpression(ast, 'unknown filter')
     rv = visit_expr(ast.node, Context(
         ctx=ctx,
         return_struct_cls=return_struct_cls,
