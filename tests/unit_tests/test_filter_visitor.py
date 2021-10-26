@@ -203,6 +203,36 @@ def test_custom_filter_arguments_self():
         visit_filter(ast, get_scalar_context(ast), config=config)
     assert 'amount of params' in str(e.value)
 
+def test_custom_filter_self_class():
+    class DummyFilters(object):
+      def dummy_filter(self, value1, value2):
+        return value2
+      def filters(self):
+        return {
+            'customfilter': self.dummy_filter
+        }
+    config = Config(CUSTOM_FILTERS=[DummyFilters()], RAISE_ON_NO_FILTER=True, RAISE_ON_INVALID_FILTER_ARGS=True)
+    template = '''{{ x|customfilter }}'''
+    ast = parse(template).find(nodes.Filter)
+    with pytest.raises(InvalidExpression) as e:
+        visit_filter(ast, get_scalar_context(ast), config=config)
+    assert 'amount of params' in str(e.value)
+
+    template = '''{{ x|customfilter(y) }}'''
+    ast = parse(template).find(nodes.Filter)
+    rtype, struct = visit_filter(ast, get_scalar_context(ast), config=config)
+    expected_struct = Dictionary({
+        'x': Unknown(label='x', linenos=[1]),
+        'y': Scalar(label='y', linenos=[1]),
+    })
+    assert struct == expected_struct
+
+    template = '''{{ x|customfilter(y, z) }}'''
+    ast = parse(template).find(nodes.Filter)
+    with pytest.raises(InvalidExpression) as e:
+        visit_filter(ast, get_scalar_context(ast), config=config)
+    assert 'amount of params' in str(e.value)
+
 def test_raise_on_unknown_filter():
     def dummy_filter(self, value1, value2):
       return value2

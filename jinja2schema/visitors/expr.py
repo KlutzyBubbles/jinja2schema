@@ -7,8 +7,7 @@ Expression is an instance of :class:`jinja2.nodes.Expr`.
 Expression visitors return a tuple which contains expression type and expression structure.
 """
 import functools
-from inspect import getargspec
-
+from inspect import getargspec, ismethod
 from jinja2 import nodes
 
 from ..model import Scalar, Dictionary, List, Unknown, Tuple, String, Number, Boolean
@@ -568,7 +567,7 @@ def visit_filter(ast, ctx, macroses=None, config=default_config):
     else:
         has_filter = False
         for filter_obj in config.CUSTOM_FILTERS:
-            if 'filters' in filter_obj and callable(filter_obj.filters):
+            if hasattr(filter_obj, 'filters') and ismethod(getattr(filter_obj, 'filters')):
               filters_to_search = filter_obj.filters()
             else:
               filters_to_search = filter_obj
