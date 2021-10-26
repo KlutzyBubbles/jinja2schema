@@ -62,6 +62,10 @@ class Config(object):
 
     CUSTOM_FILTERS = []
 
+    RAISE_ON_NO_FILTER = False
+
+    RAISE_ON_INVALID_FILTER_ARGS = True
+
     def __init__(self,
                  TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE='dictionary',
                  TYPE_OF_VARIABLE_INDEXED_WITH_INTEGER_TYPE='list',
@@ -70,7 +74,9 @@ class Config(object):
                  TEMPLATE_DIR='templates',
                  ORDER_NUMBER=False,
                  ORDER_NUMBER_SUB_COUNTER=True,
-                 CUSTOM_FILTERS=[]):
+                 CUSTOM_FILTERS=[],
+                 RAISE_ON_NO_FILTER=False,
+                 RAISE_ON_INVALID_FILTER_ARGS=True):
         if TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE not in ('dictionary', 'list'):
             raise ValueError('TYPE_OF_VARIABLE_INDEXED_WITH_VARIABLE_TYPE must be'
                              'either "dictionary" or "list"')
@@ -86,6 +92,8 @@ class Config(object):
         self.ORDER_OBJECT = OrderNumber(number=1, enabled=self.ORDER_NUMBER,
                                         sub_counter_enabled=ORDER_NUMBER_SUB_COUNTER)
         self.CUSTOM_FILTERS = CUSTOM_FILTERS
+        self.RAISE_ON_NO_FILTER = RAISE_ON_NO_FILTER
+        self.RAISE_ON_INVALID_FILTER_ARGS = RAISE_ON_INVALID_FILTER_ARGS
 
 
 default_config = Config()
