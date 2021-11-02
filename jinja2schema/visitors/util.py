@@ -9,7 +9,7 @@ from ..mergers import merge
 from ..model import Dictionary, Scalar, Unknown
 
 
-def visit(node, macroses, config, predicted_struct_cls=Scalar, return_struct_cls=Unknown):
+def visit(node, macroses, config, predicted_struct_cls=Unknown, return_struct_cls=Unknown):
     if isinstance(node, jinja2.nodes.Stmt):
         structure = visit_stmt(node, macroses, config)
     elif isinstance(node, jinja2.nodes.Expr):
@@ -21,7 +21,7 @@ def visit(node, macroses, config, predicted_struct_cls=Scalar, return_struct_cls
     return structure
 
 
-def visit_many(nodes, macroses, config, predicted_struct_cls=Scalar, return_struct_cls=Unknown):
+def visit_many(nodes, macroses, config, predicted_struct_cls=Unknown, return_struct_cls=Unknown):
     """Visits ``nodes`` and merges results.
 
     :param nodes: list of :class:`jinja2.nodes.Node`

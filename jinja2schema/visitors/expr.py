@@ -174,7 +174,7 @@ def _visit_dict(ast, ctx, macroses, items, config=default_config):
         struct = merge(struct, value_struct)
         if isinstance(key, nodes.Node):
             key_rtype, key_struct = visit_expr(key, Context(
-                predicted_struct=Scalar.from_ast(key, order_nr=config.ORDER_OBJECT.get_next())), macroses,
+                predicted_struct=Unknown.from_ast(key, order_nr=config.ORDER_OBJECT.get_next())), macroses,
                 config=config)
             struct = merge(struct, key_struct)
             if isinstance(key, nodes.Const):
@@ -194,8 +194,6 @@ def visit_bin_expr(ast, ctx, macroses=None, config=default_config):
 
 @visits_expr(nodes.UnaryExpr)
 def visit_unary_expr(ast, ctx, macroses=None, config=default_config):
-    print("visit_unary_expr")
-    print(ast)
     return visit_expr(ast.node, ctx, macroses, config=config)
 
 
@@ -503,17 +501,18 @@ def visit_filter(ast, ctx, macroses=None, config=default_config):
         ), macroses, config=config)
         return rtype, struct
     elif ast.name == 'default':
-        default_value_rtype, default_value_struct = visit_expr(
-            ast.args[0],
-            Context(predicted_struct=Unknown.from_ast(
-                ast.args[0], order_nr=config.ORDER_OBJECT.get_next())),
-            macroses, config=config)
-        node_struct = merge(
-            ctx.get_predicted_struct(),
-            default_value_rtype,
-        )
-        node_struct.used_with_default = True
-        node_struct.value = default_value_rtype.value
+        predicted_struct = merge(
+            Unknown(), ctx.get_predicted_struct())
+        rtype, struct = visit_expr(ast.node, Context(
+            return_struct_cls=Unknown,
+            predicted_struct=predicted_struct
+        ), macroses, config=config)
+        item_rtype, item_struct = visit_expr(ast.args[0], Context(
+            predicted_struct=predicted_struct), macroses, config=config)
+        struct = merge(struct, item_struct)
+        struct.used_with_default = True
+        struct.value = item_rtype.value
+        return rtype, struct
     elif ast.name == 'dictsort':
         ctx.meet(List(Tuple([Scalar(), Unknown()])), ast)
         node_struct = Dictionary.from_ast(
@@ -574,34 +573,51 @@ def visit_filter(ast, ctx, macroses=None, config=default_config):
             for name, func in filters_to_search.items():
                 if name == ast.name:
                     has_filter = True
-                    args = getargspec(func).args
-                    if 'self' in args:
+                    argspec = getargspec(func)
+                    args = argspec.args
+                    default_args = argspec.args[-len(argspec.defaults):] if argspec.defaults is not None else []
+                    if 'self' in args and 'self' not in default_args:
                       args.remove('self')
-                    arg_count = len(args)
-                    if arg_count < 1 and config.RAISE_ON_INVALID_FILTER_ARGS:
+                    max_arg_count = len(args) - 1
+                    min_arg_count = max_arg_count - len(default_args)
+                    if argspec.varargs is not None:
+                      max_arg_count += 1
+                      min_arg_count += 1
+                    if argspec.keywords is not None:
+                      max_arg_count += 1
+                      min_arg_count += 1
+                    if max_arg_count < 0 and config.RAISE_ON_INVALID_FILTER_ARGS:
                         raise InvalidExpression(
                             ast, 'Filter ' + name + ' needs at least 1 argument')
-                    if arg_count == 1:
+                    if max_arg_count == 0:
                         if ast.args is not None and len(ast.args) > 0 and config.RAISE_ON_INVALID_FILTER_ARGS:
                             raise InvalidExpression(
                                 ast, 'Filter ' + name + ' doesn\'t accept parameters')
-                        node_struct = Scalar.from_ast(
+                        node_struct = Unknown.from_ast(
                             ast.node, order_nr=config.ORDER_OBJECT.get_next())
                         return_struct_cls = Unknown
                     else:
-                        if ast.args is None or len(ast.args) != arg_count - 1 and config.RAISE_ON_INVALID_FILTER_ARGS:
+                        args_provided = 0 if ast.args is None else len(ast.args)
+                        if (args_provided < min_arg_count or args_provided > max_arg_count) and config.RAISE_ON_INVALID_FILTER_ARGS:
+                            needs_val = str(min_arg_count)
+                            if min_arg_count != max_arg_count:
+                              needs_val = str(min_arg_count) + '-' + str(max_arg_count)
                             raise InvalidExpression(ast, 'Filter ' + name + ' doesn\'t have the correct amount of params, has: ' + str(
-                                len(ast.args)) + ', needs: ' + str(arg_count - 1))
+                                len(ast.args)) + ', needs: ' + needs_val)
                         node_struct = Unknown.from_ast(
                             ast.node, order_nr=config.ORDER_OBJECT.get_next())
                         rtype, struct = visit_expr(ast.node, Context(
-                            return_struct_cls=String,
+                            return_struct_cls=Unknown,
                             predicted_struct=node_struct
                         ), macroses, config=config)
                         predicted_struct = merge(
                             Unknown(), ctx.get_predicted_struct())
                         for arg in ast.args:
                             item_rtype, item_struct = visit_expr(arg, Context(
+                                predicted_struct=predicted_struct), macroses, config=config)
+                            struct = merge(struct, item_struct)
+                        for kwarg in ast.kwargs:
+                            item_rtype, item_struct = visit_expr(kwarg.value, Context(
                                 predicted_struct=predicted_struct), macroses, config=config)
                             struct = merge(struct, item_struct)
                         rtype = Unknown.from_ast(ast)
@@ -694,6 +710,8 @@ def visit_list(ast, ctx, macroses=None, config=default_config):
 
 @visits_expr(nodes.Dict)
 def visit_dict(ast, ctx, macroses=None, config=default_config):
+    ctx = Context(predicted_struct=Unknown.from_ast(
+                ast, order_nr=config.ORDER_OBJECT.get_next()))
     ctx.meet(Dictionary(), ast)
     return _visit_dict(ast, ctx, macroses, [(item.key, item.value) for item in ast.items], config=config)
 
