@@ -1,0 +1,11 @@
+{% if test1 %}
+        {% if test2 %}
+            {% set d = {'x': 123, a: z.qwerty} %}
+        {% else %}
+            {% set d = {'x': 456, a: z.gsom} %}
+        {% endif %}
+    {% endif %}
+    {% if d %}
+        {{ d.x }}
+    {% endif %}
+    {{ z.gsom }}

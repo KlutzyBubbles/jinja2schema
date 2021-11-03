@@ -1,0 +1,5 @@
+{{ section.FILTERS.test }}
+    {%- for f in section.FILTERS.keys() %}
+        {{ section.GEO }}
+        {{ loop.index }}
+    {%- endfor %}

@@ -1,0 +1,7 @@
+{{ a|xmlattr }}
+    {{ a.attr1|join(',') }}
+    {{ a.attr2|default([])|first }}
+    {{ a.attr3|default('gsom') }}
+    {% for x in xs|rejectattr('is_active') %}
+        {{ x }}
+    {% endfor %}

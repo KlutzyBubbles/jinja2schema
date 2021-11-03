@@ -1,0 +1,11 @@
+{% set d = {'x': 123, a: z.qwerty} %}
+{{ d.x }}
+
+{% set d = {'x': 123, a: z.qwerty} %}
+{{ d.x.field }}
+
+{% set x = '123' %}
+{{ x.test }}
+
+{% set a = {'x': 123} %}
+{% set b = {a: 'test'} %}

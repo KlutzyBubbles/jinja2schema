@@ -5,7 +5,7 @@ from jinja2 import nodes
 from jinja2schema.core import parse, infer
 from jinja2schema.visitors.stmt import visit_macro
 from jinja2schema.exceptions import MergeException, InvalidExpression
-from jinja2schema.model import Dictionary, Scalar, String, Number, Boolean
+from jinja2schema.model import Dictionary, Scalar
 from jinja2schema.macro import Macro
 
 
@@ -16,17 +16,17 @@ def test_macro_visitor_1():
         {{ x }}
     {%- endmacro %}
     '''
-    ast = parse(template).find(nodes.Macro)
+    node = parse(template).find(nodes.Macro)
 
     macroses = {}
-    struct = visit_macro(ast, macroses)
+    struct = visit_macro(node, macroses)
 
     expected_macro = Macro('input', [
         ('name', Scalar(label='argument #1', linenos=[2])),
     ], [
-        ('value', String(label='argument "value"', linenos=[2])),
-        ('type', String(label='argument "type"', linenos=[2])),
-        ('size', Number(label='argument "size"', linenos=[2])),
+        ('value', Scalar(label='argument "value"', linenos=[2])),
+        ('type', Scalar(label='argument "type"', linenos=[2])),
+        ('size', Scalar(label='argument "size"', linenos=[2])),
     ])
     macro = macroses['input']
     assert macro.name == expected_macro.name
@@ -45,11 +45,11 @@ def test_macro_visitor_2():
         {{ value.x }}
     {%- endmacro %}
     '''
-    ast = parse(template).find(nodes.Macro)
+    node = parse(template).find(nodes.Macro)
 
     macroses = {}
     with pytest.raises(MergeException) as e:
-        visit_macro(ast, macroses)
+        visit_macro(node, macroses)
 
     assert str(e.value) == ('variable "argument "value"" (used as string on lines 2) conflicts with '
                             'variable "value" (used as dictionary on lines: 3)')
@@ -79,7 +79,7 @@ def test_macro_call_1():
 def test_macro_call_2():
     template = '''
     {% macro user(login, name, is_active=True) %}
-        {{ login }} {{ name.first }} {{ name.last }} {{ is_active }}
+        {{ login }} {{ name.first }} {{ name.lnode }} {{ is_active }}
     {% endmacro %}
     {{ user(data.login, data.name, is_active=data.is_active) }}
     '''
@@ -89,7 +89,7 @@ def test_macro_call_2():
         'is_active': Boolean(label='is_active', linenos=[2, 5]),
         'name': Dictionary({
             'first': Scalar(label='first', linenos=[3]),
-            'last': Scalar(label='last', linenos=[3]),
+            'lnode': Scalar(label='lnode', linenos=[3]),
         }, label='name', linenos=[2, 5]),
     }, label='data', linenos=[5])
 

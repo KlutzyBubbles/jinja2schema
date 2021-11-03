@@ -1,0 +1,4 @@
+{% for k, v in data|dictsort %}
+        {{ k }}
+        {{ v }}
+    {% endfor %}

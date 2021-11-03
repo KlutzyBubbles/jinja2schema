@@ -1,0 +1,3 @@
+{% set items = data|dictsort %}
+    {% for x, y in items %}
+    {% endfor %}

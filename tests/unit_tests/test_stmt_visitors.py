@@ -2,7 +2,7 @@
 import pytest
 from jinja2 import nodes
 
-from jinja2schema.core import parse, infer_from_ast
+from jinja2schema.core import parse, infer_from_node
 from jinja2schema.visitors.stmt import visit_assign, visit_if, visit_for
 from jinja2schema.exceptions import MergeException, UnexpectedExpression
 from jinja2schema.model import Dictionary, Scalar, List, Unknown, Tuple, String, Number
@@ -14,8 +14,8 @@ def test_for_1():
         {{ x }}
     {% endfor %}
     '''
-    ast = parse(template).find(nodes.For)
-    struct = visit_for(ast)
+    node = parse(template).find(nodes.For)
+    struct = visit_for(node)
     expected_struct = Dictionary({
         'a': Dictionary({
             'b': List(Scalar(label='x', linenos=[3]), label='b', linenos=[2])
@@ -34,8 +34,8 @@ def test_for_2():
         {{ loop.length }}
     {% endfor %}
     '''
-    ast = parse(template)
-    struct = infer_from_ast(ast)
+    node = parse(template)
+    struct = infer_from_node(node)
 
     expected_struct = Dictionary({
         'xs': List(Scalar(label='x', linenos=[3]), label='xs', linenos=[2]),
@@ -51,8 +51,8 @@ def test_for_3():
         {{ b }}
     {% endfor %}
     '''
-    ast = parse(template).find(nodes.For)
-    struct = visit_for(ast)
+    node = parse(template).find(nodes.For)
+    struct = visit_for(node)
 
     expected_struct = Dictionary({
         'list': List(Tuple((
@@ -67,9 +67,9 @@ def test_for_3():
 
 def test_assign_1():
     template = '''{% set a = b %}'''
-    ast = parse(template).find(nodes.Assign)
+    node = parse(template).find(nodes.Assign)
 
-    struct = visit_assign(ast)
+    struct = visit_assign(node)
     expected_struct = Dictionary({
         'a': Unknown(label='a', linenos=[1], constant=True),
         'b': Unknown(label='b', linenos=[1]),
@@ -79,9 +79,9 @@ def test_assign_1():
 
 def test_assign_2():
     template = '''{% set y = "-" ~ y %}'''
-    ast = parse(template).find(nodes.Assign)
+    node = parse(template).find(nodes.Assign)
 
-    struct = visit_assign(ast)
+    struct = visit_assign(node)
     expected_struct = Dictionary({
         'y': String(label='y', linenos=[1])
     })
@@ -90,16 +90,16 @@ def test_assign_2():
 
 def test_assign_3():
     template = '''{% set a, b = {'a': 1, 'b': 2} %}'''
-    ast = parse(template).find(nodes.Assign)
+    node = parse(template).find(nodes.Assign)
     with pytest.raises(UnexpectedExpression):
-        visit_assign(ast)
+        visit_assign(node)
 
 
 def test_assign_4():
     template = '''{% set a, b = 1, {'gsom': 'gsom', z: z} %}'''
-    ast = parse(template).find(nodes.Assign)
+    node = parse(template).find(nodes.Assign)
 
-    struct = visit_assign(ast)
+    struct = visit_assign(node)
     expected_struct = Dictionary({
         'a': Number(label='a', linenos=[1], constant=True, value=1),
         'b': Dictionary(data={
@@ -117,8 +117,8 @@ def test_assign_5():
         ('B', {'data': 0.9}),
     ] %}
     '''
-    ast = parse(template).find(nodes.Assign)
-    struct = visit_assign(ast)
+    node = parse(template).find(nodes.Assign)
+    struct = visit_assign(node)
     expected_struct = Dictionary({
         'weights': List(Tuple([
             String(linenos=[3, 4], constant=True),
@@ -137,9 +137,9 @@ def test_assign_6():
         ('B', {'data': 0.9}, 1, 2),
     ] %}
     '''
-    ast = parse(template).find(nodes.Assign)
+    node = parse(template).find(nodes.Assign)
     with pytest.raises(MergeException):
-        visit_assign(ast)
+        visit_assign(node)
 
 
 def test_if_1():
@@ -149,8 +149,8 @@ def test_if_1():
         {{ z.field }}
     {% endif %}
     '''
-    ast = parse(template).find(nodes.If)
-    struct = visit_if(ast)
+    node = parse(template).find(nodes.If)
+    struct = visit_if(node)
 
     expected_struct = Dictionary({
         'z': Dictionary({
@@ -170,7 +170,7 @@ def test_if_2():
     {% endif %}
     {{ x }}
     '''
-    struct = infer_from_ast(parse(template))
+    struct = infer_from_node(parse(template))
     expected_struct = Dictionary({
         'x': Scalar(label='x', linenos=[2, 4, 6]),
         'y': Unknown(label='y', linenos=[2, 4]),

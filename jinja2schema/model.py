@@ -71,24 +71,24 @@ class Variable(object):
         return cls(**self.__dict__)
 
     @classmethod
-    def _get_kwargs_from_ast(cls, ast):
+    def _get_kwargs_from_node(cls, node):
         return {
-            'linenos': [ast.lineno],
-            'label': ast.name if isinstance(ast, nodes.Name) else None,
-            'value': ast.value if hasattr(ast, 'value') else None,
+            'linenos': [node.lineno],
+            'label': node.name if isinstance(node, nodes.Name) else None,
+            'value': node.value if hasattr(node, 'value') else None,
         }
 
     @classmethod
-    def from_ast(cls, ast, **kwargs):
-        """Constructs a variable using information from ``ast`` (such as label and line numbers).
+    def from_node(cls, node, **kwargs):
+        """Constructs a variable using information from ``node`` (such as label and line numbers).
 
-        :param ast: AST node
-        :type ast: :class:`jinja2.nodes.Node`
+        :param node: NODE node
+        :type node: :class:`jinja2.nodes.Node`
         """
         for k, v in list(kwargs.items()):
             if v is None:
                 del kwargs[k]
-        kwargs = dict(cls._get_kwargs_from_ast(ast), **kwargs)
+        kwargs = dict(cls._get_kwargs_from_node(node), **kwargs)
         return cls(**kwargs)
 
     @property
@@ -111,6 +111,9 @@ class Variable(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __repr__(self):
+      return '<unknown>'
 
 
 class Dictionary(Variable):
@@ -147,8 +150,8 @@ class Dictionary(Variable):
         return rv
 
     @classmethod
-    def from_ast(cls, ast, data=None, **kwargs):
-        kwargs = dict(cls._get_kwargs_from_ast(ast), **kwargs)
+    def from_node(cls, node, data=None, **kwargs):
+        kwargs = dict(cls._get_kwargs_from_node(node), **kwargs)
         return cls(data, **kwargs)
 
     def __setitem__(self, key, value):
@@ -188,29 +191,29 @@ class Dictionary(Variable):
 class List(Variable):
     """A list which items are of the same type.
 
-    .. attribute:: item
+    .. attribute:: items
 
         A structure of list items, subclass of :class:`Variable`.
     """
-    def __init__(self, item, **kwargs):
-        self.item = item
+    def __init__(self, items, **kwargs):
+        self.items = items
         super(List, self).__init__(**kwargs)
 
     def __eq__(self, other):
-        return super(List, self).__eq__(other) and self.item == other.item
+        return super(List, self).__eq__(other) and self.items == other.items
 
     def __repr__(self):
-        return pprint.pformat([self.item])
+        return pprint.pformat([self.items])
 
     def clone(self):
         rv = super(List, self).clone()
-        rv.item = self.item.clone()
+        rv.items = self.items.clone()
         return rv
 
     @classmethod
-    def from_ast(cls, ast, item, **kwargs):
-        kwargs = dict(cls._get_kwargs_from_ast(ast), **kwargs)
-        return cls(item, **kwargs)
+    def from_node(cls, node, items, **kwargs):
+        kwargs = dict(cls._get_kwargs_from_node(node), **kwargs)
+        return cls(items, **kwargs)
 
 
 class Tuple(Variable):
@@ -225,7 +228,7 @@ class Tuple(Variable):
         Whether new elements can be added to the tuple in the process of merge or not.
     """
     def __init__(self, items, **kwargs):
-        self.items = tuple(items) if items is not None else None
+        self.items = tuple(items) if items is not None else ()
         self.may_be_extended = kwargs.pop('may_be_extended', False)
         super(Tuple, self).__init__(**kwargs)
 
@@ -241,8 +244,8 @@ class Tuple(Variable):
         return rv
 
     @classmethod
-    def from_ast(cls, ast, items, **kwargs):
-        kwargs = dict(cls._get_kwargs_from_ast(ast), **kwargs)
+    def from_node(cls, node, items, **kwargs):
+        kwargs = dict(cls._get_kwargs_from_node(node), **kwargs)
         return cls(items, **kwargs)
 
 
@@ -250,27 +253,3 @@ class Scalar(Variable):
     """A scalar. Either string, number, boolean or ``None``."""
     def __repr__(self):
         return '<scalar>'
-
-
-class String(Scalar):
-    """A string."""
-    def __repr__(self):
-        return '<string>'
-
-
-class Number(Scalar):
-    """A number."""
-    def __repr__(self):
-        return '<number>'
-
-
-class Boolean(Scalar):
-    """A boolean."""
-    def __repr__(self):
-        return '<boolean>'
-
-
-class Unknown(Variable):
-    """A variable which type is unknown."""
-    def __repr__(self):
-        return '<unknown>'

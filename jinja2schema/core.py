@@ -6,13 +6,13 @@ jinja2schema.core
 import jinja2
 
 from .config import Config
-from .model import Dictionary, List, Tuple, Scalar, Number, Unknown, Boolean, String
+from .model import Dictionary, List, Tuple, Scalar
 from .visitors import visit
 from . import _compat
 
 
 def parse(template, jinja2_env=None):
-    """Parses Jinja2 template and returns it's AST.
+    """Parses Jinja2 template and returns it's NODE.
 
     :type template: basestring
     :type jinja2_env: :class:`jinja2.Environment`
@@ -33,12 +33,12 @@ def _ignore_constants(var):
     return var
 
 
-def infer_from_ast(ast, ignore_constants=True, config=Config()):
+def infer_from_node(node, ignore_constants=True, config=Config()):
     """Returns a :class:`.model.Dictionary` which reflects a structure of variables used
-    within ``ast``.
+    within ``node``.
 
-    :param ast: AST
-    :type ast: :class:`jinja2.nodes.Node`
+    :param node: NODE
+    :type node: :class:`jinja2.nodes.Node`
     :param ignore_constants: excludes constant variables from a resulting structure
     :param config: a config
     :type config: :class:`.config.Config`
@@ -46,7 +46,7 @@ def infer_from_ast(ast, ignore_constants=True, config=Config()):
     :raises: :class:`.exceptions.MergeException`, :class:`.exceptions.InvalidExpression`,
              :class:`.exceptions.UnexpectedExpression`
     """
-    rv = visit(ast, {}, config)
+    rv = visit(node, {}, config)
     if ignore_constants:
         rv = _ignore_constants(rv)
     return rv
@@ -63,7 +63,7 @@ def infer(template, config=Config()):
     :raises: :class:`.exceptions.MergeException`, :class:`.exceptions.InvalidExpression`,
              :class:`.exceptions.UnexpectedExpression`
     """
-    return infer_from_ast(parse(template), config=config, ignore_constants=True)
+    return infer_from_node(parse(template), config=config, ignore_constants=True)
 
 
 class JSONSchemaDraft4Encoder(object):
@@ -105,7 +105,14 @@ class JSONSchemaDraft4Encoder(object):
                 'type': 'array',
                 'items': [self.encode(item) for item in var.items],
             })
-        elif isinstance(var, Unknown):
+        elif isinstance(var, Scalar):
+            rv['anyOf'] = [
+                {'type': 'boolean'},
+                {'type': 'null'},
+                {'type': 'number'},
+                {'type': 'string'},
+            ]
+        elif isinstance(var, Variable):
             rv['anyOf'] = [
                 {'type': 'object'},
                 {'type': 'array'},
@@ -114,31 +121,17 @@ class JSONSchemaDraft4Encoder(object):
                 {'type': 'boolean'},
                 {'type': 'null'},
             ]
-        elif isinstance(var, String):
-            rv['type'] = 'string'
-        elif isinstance(var, Number):
-            rv['type'] = 'number'
-        elif isinstance(var, Boolean):
-            rv['type'] = 'boolean'
-        elif isinstance(var, Scalar):
-            rv['anyOf'] = [
-                {'type': 'boolean'},
-                {'type': 'null'},
-                {'type': 'number'},
-                {'type': 'string'},
-            ]
         return rv
 
 
 class StringJSONSchemaDraft4Encoder(JSONSchemaDraft4Encoder):
-    """Encodes :class:`.model.Unknown` and :class:`.model.Scalar` (but not it's subclasses --
-    :class:`.model.String`, :class:`.model.Number` or :class:`.model.Boolean`) variables as strings.
+    """Encodes :class:`.model.Variable` and :class:`.model.Scalar`) variables as strings.
 
     Useful for rendering forms using resulting JSON schema, as most of form-rendering
     tools do not support "anyOf" validator.
     """
     def encode(self, var):
-        if isinstance(var, Unknown) or type(var) is Scalar:
+        if type(var) is Scalar:
             rv = self.encode_common_attrs(var)
             rv['type'] = 'string'
         else:

@@ -6,14 +6,14 @@ jinja2schema.visitors.util
 import jinja2.nodes
 
 from ..mergers import merge
-from ..model import Dictionary, Scalar, Unknown
+from ..model import Dictionary, Scalar, Variable
 
 
-def visit(node, macroses, config, predicted_struct_cls=Unknown, return_struct_cls=Unknown):
+def visit(node, macroses, config, predicted_struct_cls=Variable, return_struct_cls=Variable):
     if isinstance(node, jinja2.nodes.Stmt):
         structure = visit_stmt(node, macroses, config)
     elif isinstance(node, jinja2.nodes.Expr):
-        ctx = Context(predicted_struct=predicted_struct_cls.from_ast(node, order_nr=config.ORDER_OBJECT.get_next()),
+        ctx = Context(predicted_struct=predicted_struct_cls.from_node(node, order_nr=config.ORDER_OBJECT.get_next()),
                       return_struct_cls=return_struct_cls)
         _, structure = visit_expr(node, ctx, macroses, config)
     elif isinstance(node, jinja2.nodes.Template):
@@ -21,12 +21,12 @@ def visit(node, macroses, config, predicted_struct_cls=Unknown, return_struct_cl
     return structure
 
 
-def visit_many(nodes, macroses, config, predicted_struct_cls=Unknown, return_struct_cls=Unknown):
+def visit_many(nodes, macroses, config, predicted_struct_cls=Variable, return_struct_cls=Variable):
     """Visits ``nodes`` and merges results.
 
     :param nodes: list of :class:`jinja2.nodes.Node`
     :param predicted_struct_cls: ``predicted_struct`` for expression visitors will be constructed
-                                   using this class by calling :meth:`from_ast` method
+                                   using this class by calling :meth:`from_node` method
     :return: :class:`Dictionary`
     """
     rv = Dictionary()

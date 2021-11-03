@@ -39,7 +39,7 @@ class MergeException(InferException):
 
 class UnexpectedExpression(InferException):
     """Raised when a visitor was expecting compatibility with :attr:`expected_struct`,
-    but got :attr:`actual_ast` of structure :attr:`actual_struct`.
+    but got :attr:`actual_node` of structure :attr:`actual_struct`.
 
     Compatibility is checked by merging expected structure with actual one.
 
@@ -47,25 +47,25 @@ class UnexpectedExpression(InferException):
 
         expected :class:`.model.Variable`
 
-    .. attribute:: actual_ast
+    .. attribute:: actual_node
 
         actual :class:`jinja2.nodes.Node`
 
-    .. attribute:: actual_ast
+    .. attribute:: actual_node
 
-        :class:`.model.Variable` described by ``actual_ast``
+        :class:`.model.Variable` described by ``actual_node``
     """
-    def __init__(self, expected_struct, actual_ast, actual_struct):
+    def __init__(self, expected_struct, actual_node, actual_struct):
         self.expected_struct = expected_struct
-        self.actual_ast = actual_ast
+        self.actual_node = actual_node
         self.actual_struct = actual_struct
 
     def __str__(self):
         return ('conflict on the line {lineno}\n'
-                'got: AST node jinja2.nodes.{node} of structure {actual_struct}\n'
+                'got: NODE node jinja2.nodes.{node} of structure {actual_struct}\n'
                 'expected structure: {expected_struct}').format(
-                    lineno=self.actual_ast.lineno,
-                    node=self.actual_ast.__class__.__name__,
+                    lineno=self.actual_node.lineno,
+                    node=self.actual_node.__class__.__name__,
                     actual_struct=self.actual_struct,
                     expected_struct=self.expected_struct)
 
@@ -75,13 +75,13 @@ class InvalidExpression(InferException):
     or when a template contains incorrect expressions (i.e., such as applying ``divisibleby`` filter
     without an argument).
 
-    .. attribute:: ast
+    .. attribute:: node
 
         :class:`jinja2.nodes.Node` caused the exception
     """
-    def __init__(self, ast, message):
-        self.ast = ast
+    def __init__(self, node, message):
+        self.node = node
         self.message = message
 
     def __str__(self):
-        return 'line {0}: {1}'.format(self.ast.lineno, self.message)
+        return 'line {0}: {1}'.format(self.node.lineno, self.message)

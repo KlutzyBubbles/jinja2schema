@@ -3,7 +3,7 @@
 jinja2schema.util
 ~~~~~~~~~~~~~~~~~
 """
-from .model import Dictionary, Scalar, List, Unknown, Tuple
+from .model import Dictionary, Scalar, List, Tuple
 
 
 def _format_attrs(var):
@@ -36,7 +36,7 @@ def _debug_repr(var):
                 el_repr = _debug_repr(el)
                 el_repr[-1] += ','
                 rv.extend(_indent(el_repr, spaces=4))
-            rv[-1] = rv[-1][:-1]  # remove comma from the last tuple item
+            rv[-1] = rv[-1][:-1]  # remove comma from the lnode tuple item
             rv.append(')')
         elif isinstance(var, List):
             rv.append('List({},'.format(_format_attrs(var)))
@@ -44,7 +44,7 @@ def _debug_repr(var):
             rv.append(')')
     elif isinstance(var, Scalar):
         rv = ['{}({})'.format(var.__class__.__name__, _format_attrs(var))]
-    elif isinstance(var, Unknown):
+    elif isinstance(var, Variable):
         rv = ['Unknown({})'.format(_format_attrs(var))]
     return rv
 

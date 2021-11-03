@@ -1,0 +1,13 @@
+{% set xys = [
+        ('a', 0.3),
+        ('b', 0.3),
+    ] %}
+    {% if configuration is undefined %}
+        {% set configuration = 'prefix-' ~ timestamp %}
+    {% endif %}
+    queue: {{ queue if queue is defined else 'wizard' }}
+    description: >-
+    {% for x, y in xys %}
+        {{ loop.index }}:
+        {{ x }} {{ y }}
+    {% endfor %}

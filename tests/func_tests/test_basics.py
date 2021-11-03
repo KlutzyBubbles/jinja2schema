@@ -5,7 +5,7 @@ from jinja2schema.config import Config
 
 from jinja2schema.core import infer
 from jinja2schema.exceptions import MergeException, UnexpectedExpression
-from jinja2schema.model import List, Dictionary, Scalar, Unknown, String, Boolean, Tuple, Number
+from jinja2schema.model import List, Dictionary, Scalar, Tuple
 from jinja2schema.util import debug_repr
 
 
@@ -182,7 +182,7 @@ def test_basics_8():
         infer(template)
     e = excinfo.value
 
-    assert isinstance(e.actual_ast, nodes.Filter)
+    assert isinstance(e.actual_node, nodes.Filter)
     assert e.expected_struct == List(
         Dictionary({
             'name': Scalar(label='name', constant=False, linenos=[3])
@@ -395,7 +395,7 @@ def test_boolean_conditions_setting_1():
     with pytest.raises(UnexpectedExpression) as e:
         infer('{% if [] %}{% endif %}', config_2)  # make sure this does raise
     assert str(e.value) == ('conflict on the line 1\n'
-                            'got: AST node jinja2.nodes.List of structure [<unknown>]\n'
+                            'got: NODE node jinja2.nodes.List of structure [<unknown>]\n'
                             'expected structure: <boolean>')
 
 

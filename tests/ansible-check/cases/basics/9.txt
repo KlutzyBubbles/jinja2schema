@@ -1,0 +1,2 @@
+{% set xs = items|batch(3, '&nbsp;') %}
+    {{ xs[0][0] }}

@@ -1,0 +1,5 @@
+{% for row in items|batch(3, '&nbsp;') %}
+        {% for column in row %}
+            {{ column.x }}
+        {% endfor %}
+    {% endfor %}

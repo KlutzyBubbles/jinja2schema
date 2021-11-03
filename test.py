@@ -9,16 +9,16 @@ import ansible.plugins.filter.urls
 import ansible.plugins.filter.urlsplit
 import jinja2schema
 
-loader = DataLoader()
-loader.set_basedir('.')
-
 filters = [
   ansible.plugins.filter.core.FilterModule(),
   ansible.plugins.filter.mathstuff.FilterModule(),
   ansible.plugins.filter.urls.FilterModule(),
   ansible.plugins.filter.urlsplit.FilterModule()
 ]
-config = jinja2schema.Config(CUSTOM_FILTERS=filters)
+config = jinja2schema.Config(CUSTOM_FILTERS=filters, RAISE_ON_INVALID_FILTER_ARGS=False)
+
+all_vars = []
+errors = []
 
 def get_vars(string):
   try:
@@ -37,14 +37,21 @@ def get_vars(string):
     # return list(undeclared_vars)
     variables = jinja2schema.infer(string, config)
     print(variables)
+    all_vars.extend(list(variables))
     return list(variables)
   except Exception, e:
+    # print(e)
     errors.append(str(e))
     return str(e)
 
-print(get_vars("{{ (gpg_key_directory_permission.stat.mode <= '0755') and (( gpg_fingerprints.stdout_lines | difference(gpg_valid_fingerprints)) | length == 0) and (gpg_fingerprints.stdout_lines | length > 0) and (ansible_distribution == \"RedHat\") }}"))
-
+#get_vars("{{ all_machine_info | default({}) | combine({ (item | default(default_deployment_item)).vm_name: (item | default(default_deployment_item)).machine_info }, recursive=true) }}")
+#get_vars("{{ a | default({}) | combine({ (item | default(b)).vm_name: (item | default(c)).machine_info }, recursive=true) }}")
+get_vars("{{ a | default({}) | combine({ (item | default(b)).vm_name: (item | default(c)).machine_info }, recursive=bringme) }}")
+# get_vars("{{ a | default(b) }}")
+#get_vars("{{ a | default({}) }}")
+#  | combine({ (item | default(default_deployment_item)).vm_name: (item | default(default_deployment_item)).machine_info }, recursive=true)
 print(all_vars)
+print(errors)
 
 # for item in test._entries:
 #   print(item)

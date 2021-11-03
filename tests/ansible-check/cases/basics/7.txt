@@ -1,0 +1,3 @@
+{% for row in items|batch(3, '&nbsp;')|batch(1) %}
+        {{ row[1][1].name }}
+    {% endfor %}
