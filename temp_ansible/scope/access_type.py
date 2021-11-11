@@ -7,8 +7,9 @@ ACCESS_TYPE_REFERENCED = 'referenced'
 ACCESS_TYPE_MAGIC = 'magic'
 ACCESS_TYPE_CHANGED = 'changed'
 ACCESS_TYPE_REGISTERED = 'registered'
+ACCESS_TYPE_BUILT = 'built'
 
-ACCESS_TYPE_PROPER_DEFINED = [ACCESS_TYPE_CHANGED, ACCESS_TYPE_REGISTERED]
+ACCESS_TYPE_PROPER_DEFINED = [ACCESS_TYPE_CHANGED, ACCESS_TYPE_REGISTERED, ACCESS_TYPE_BUILT]
 ACCESS_TYPE_USED_REFERENCED = [ACCESS_TYPE_USED, ACCESS_TYPE_REFERENCED]
 ACCESS_TYPE_ALL = ACCESS_TYPE_PROPER_DEFINED + ACCESS_TYPE_USED_REFERENCED + [ACCESS_TYPE_MAGIC]
 
@@ -41,8 +42,21 @@ class AccessType(object):
 
   def is_magic(self):
     if len(self.actions) == 0:
-      return True
+      return False
     return self.actions[0] in [ACCESS_TYPE_MAGIC]
+
+  def is_magic_used(self):
+    if len(self.actions) == 0:
+      return False
+    has_used = False
+    if self.actions[0] in [ACCESS_TYPE_MAGIC]:
+      temp_actions = list(self.actions)
+      temp_actions.pop(0)
+      for action in temp_actions:
+        if action in ACCESS_TYPE_USED_REFERENCED:
+          has_used = True
+          break
+    return has_used
 
   def construct_from_attr(self, with_history=False):
     if not self.has_attr():

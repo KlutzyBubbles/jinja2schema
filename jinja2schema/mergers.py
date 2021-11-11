@@ -4,7 +4,6 @@ jinja2schema.mergers
 ~~~~~~~~~~~~~~~~~~~~
 """
 import itertools
-from jinja2schema.util import debug_repr
 
 from .model import Scalar, Dictionary, List, Variable, Tuple
 from .exceptions import MergeException
@@ -35,7 +34,7 @@ def merge(first, second, custom_merger=None):
             elif key in second:
                 result[key] = second[key].clone()
     elif isinstance(first, List) and isinstance(second, List):
-        result = List(merge(first.item, second.item, custom_merger=custom_merger))
+        result = List(merge(first.items, second.items, custom_merger=custom_merger))
     elif isinstance(first, Tuple) and isinstance(second, Tuple):
         if first.items is second.items is None:
             result = Tuple(None)
@@ -52,8 +51,41 @@ def merge(first, second, custom_merger=None):
         raise MergeException(tuple_item, list_item)
       result = Tuple([merge(a, b, custom_merger=custom_merger)
                             for a, b in zip_longest(tuple_item.items, tuple(list_item.items), fillvalue=Variable())])
-    else:
+    elif isinstance(first, Scalar) or isinstance(second, Scalar):
+      scalar_item = first if isinstance(first, Scalar) else second
+      other_item = first if not isinstance(first, Scalar) else second
+      # print('SCALAR')
+      # print(scalar_item)
+      # print(other_item)
+      # print('CHECKS')
+      # print(isinstance(other_item, Dictionary))
+      # print(isinstance(other_item, Tuple))
+      # print(isinstance(other_item, List))
+      # print('END')
+      if instanceof_many(other_item, [List, Tuple, Dictionary]):
         raise MergeException(first, second)
+      result = scalar_item.clone()
+      #print('result')
+      #print(result)
+      #print('END')
+    elif instanceof_many(first, [List, Tuple, Dictionary]) or instanceof_many(second, [List, Tuple, Dictionary]):
+      typed_item = first if instanceof_many(first, [List, Tuple, Dictionary]) else second
+      other_item = first if not instanceof_many(first, [List, Tuple, Dictionary]) else second
+      #print('TYPED')
+      #print(typed_item)
+      #print(other_item)
+      #print('END')
+      if isinstance(other_item, Scalar):
+        raise MergeException(first, second)
+      result = typed_item.clone()
+      #print('result')
+      #print(result)
+      #print('END')
+    elif first.is_unknown() or second.is_unknown():
+      known_item = second if first.is_unknown() else first
+      result = known_item.clone()
+    else:
+      raise MergeException(first, second)
     result.label = first.label or second.label
     result.linenos = list(sorted(set(first.linenos + second.linenos)))
     result.constant = first.constant
@@ -61,13 +93,15 @@ def merge(first, second, custom_merger=None):
     result.used_with_default = first.used_with_default and second.used_with_default
     result.checked_as_defined = first.checked_as_defined and second.checked_as_defined
     result.checked_as_undefined = first.checked_as_undefined and second.checked_as_undefined
-    if first.value == second.value:
-        result.value = first.value
-    result.order_nr = first.order_nr
     if callable(custom_merger):
         result = custom_merger(first, second, result)
     return result
 
+def instanceof_many(obj, instances):
+  for instance in instances:
+    if isinstance(obj, instance):
+      return True
+  return False
 
 def merge_many(first, second, *args):
     struct = merge(first, second)

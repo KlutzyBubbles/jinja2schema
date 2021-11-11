@@ -143,4 +143,4 @@ def test_macro_wrong_args():
     template = macro_template + '{{ format_hello(1, 2, missing=123) }}'
     with pytest.raises(InvalidExpression) as e:
         infer(template)
-    assert str(e.value) == 'line 6: incorrect usage of "format_hello". unknown keyword argument "missing" is passed'
+    assert str(e.value) == 'line 6: incorrect usage of "format_hello". variable keyword argument "missing" is passed'

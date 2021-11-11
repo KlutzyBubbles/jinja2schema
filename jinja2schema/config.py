@@ -3,8 +3,6 @@
 jinja2schema.config
 ~~~~~~~~~~~~~~~~~~~
 """
-from .order_number import OrderNumber
-
 
 class Config(object):
     """Configuration."""
@@ -48,18 +46,6 @@ class Config(object):
     this configuration is not needed.
     """
 
-    ORDER_NUMBER = False
-    """Add a order number to each node
-
-    Add a order number to make schema sortable.
-    """
-
-    ORDER_NUMBER_SUB_COUNTER = True
-    """Independent subsection order numbers
-
-    Use a separate counter in subsections as order number creator.
-    """
-
     CUSTOM_FILTERS = []
 
     RAISE_ON_NO_FILTER = False
@@ -72,8 +58,6 @@ class Config(object):
                  BOOLEAN_CONDITIONS=False,
                  PACKAGE_NAME='',
                  TEMPLATE_DIR='templates',
-                 ORDER_NUMBER=False,
-                 ORDER_NUMBER_SUB_COUNTER=True,
                  CUSTOM_FILTERS=[],
                  RAISE_ON_NO_FILTER=False,
                  RAISE_ON_INVALID_FILTER_ARGS=True):
@@ -88,9 +72,6 @@ class Config(object):
         self.BOOLEAN_CONDITIONS = BOOLEAN_CONDITIONS
         self.PACKAGE_NAME = PACKAGE_NAME
         self.TEMPLATE_DIR = TEMPLATE_DIR
-        self.ORDER_NUMBER = ORDER_NUMBER
-        self.ORDER_OBJECT = OrderNumber(number=1, enabled=self.ORDER_NUMBER,
-                                        sub_counter_enabled=ORDER_NUMBER_SUB_COUNTER)
         self.CUSTOM_FILTERS = CUSTOM_FILTERS
         self.RAISE_ON_NO_FILTER = RAISE_ON_NO_FILTER
         self.RAISE_ON_INVALID_FILTER_ARGS = RAISE_ON_INVALID_FILTER_ARGS

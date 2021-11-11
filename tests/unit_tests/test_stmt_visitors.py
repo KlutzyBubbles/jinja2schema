@@ -5,7 +5,7 @@ from jinja2 import nodes
 from jinja2schema.core import parse, infer_from_node
 from jinja2schema.visitors.stmt import visit_assign, visit_if, visit_for
 from jinja2schema.exceptions import MergeException, UnexpectedExpression
-from jinja2schema.model import Dictionary, Scalar, List, Unknown, Tuple, String, Number
+from jinja2schema.model import Dictionary, Scalar, List, Variable, Tuple
 
 
 def test_for_1():
@@ -39,7 +39,7 @@ def test_for_2():
 
     expected_struct = Dictionary({
         'xs': List(Scalar(label='x', linenos=[3]), label='xs', linenos=[2]),
-        'ys': List(Unknown(linenos=[4]), label='ys', linenos=[4]),
+        'ys': List(Variable(linenos=[4]), label='ys', linenos=[4]),
     })
     assert struct == expected_struct
 
@@ -71,8 +71,8 @@ def test_assign_1():
 
     struct = visit_assign(node)
     expected_struct = Dictionary({
-        'a': Unknown(label='a', linenos=[1], constant=True),
-        'b': Unknown(label='b', linenos=[1]),
+        'a': Variable(label='a', linenos=[1], constant=True),
+        'b': Variable(label='b', linenos=[1]),
     })
     assert struct == expected_struct
 
@@ -83,7 +83,7 @@ def test_assign_2():
 
     struct = visit_assign(node)
     expected_struct = Dictionary({
-        'y': String(label='y', linenos=[1])
+        'y': Scalar(label='y', linenos=[1])
     })
     assert struct == expected_struct
 
@@ -101,9 +101,9 @@ def test_assign_4():
 
     struct = visit_assign(node)
     expected_struct = Dictionary({
-        'a': Number(label='a', linenos=[1], constant=True, value=1),
+        'a': Scalar(label='a', linenos=[1], constant=True, value=1),
         'b': Dictionary(data={
-            'gsom': String(linenos=[1], constant=True, value='gsom'),
+            'gsom': Scalar(linenos=[1], constant=True, value='gsom'),
         }, label='b', linenos=[1], constant=True),
         'z': Scalar(label='z', linenos=[1]),
     })
@@ -121,9 +121,9 @@ def test_assign_5():
     struct = visit_assign(node)
     expected_struct = Dictionary({
         'weights': List(Tuple([
-            String(linenos=[3, 4], constant=True),
+            Scalar(linenos=[3, 4], constant=True),
             Dictionary({
-                'data': Number(linenos=[3, 4], constant=True)
+                'data': Scalar(linenos=[3, 4], constant=True)
             }, linenos=[3, 4], constant=True),
         ], linenos=[3, 4], constant=True), label='weights', linenos=[2], constant=True)
     })
@@ -157,7 +157,7 @@ def test_if_1():
             'field': Scalar(label='field', linenos=[4]),
         }, label='z', linenos=[2, 4]),
         'x': Scalar(label='x', linenos=[2, 3]),
-        'y': Unknown(label='y', linenos=[2]),
+        'y': Variable(label='y', linenos=[2]),
     })
     assert struct == expected_struct
 
@@ -173,7 +173,7 @@ def test_if_2():
     struct = infer_from_node(parse(template))
     expected_struct = Dictionary({
         'x': Scalar(label='x', linenos=[2, 4, 6]),
-        'y': Unknown(label='y', linenos=[2, 4]),
-        'z': Unknown(label='z', linenos=[2, 4]),
+        'y': Variable(label='y', linenos=[2, 4]),
+        'z': Variable(label='z', linenos=[2, 4]),
     })
     assert struct == expected_struct

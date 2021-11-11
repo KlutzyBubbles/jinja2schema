@@ -54,8 +54,7 @@ class Variable(object):
     """
     def __init__(self, label=None, linenos=None, constant=False,
                  may_be_defined=False, used_with_default=False,
-                 checked_as_undefined=False, checked_as_defined=False,
-                 value=None, order_nr=None):
+                 checked_as_undefined=False, checked_as_defined=False):
         self.label = label
         self.linenos = linenos if linenos is not None else []
         self.constant = constant
@@ -63,8 +62,6 @@ class Variable(object):
         self.used_with_default = used_with_default
         self.checked_as_undefined = checked_as_undefined
         self.checked_as_defined = checked_as_defined
-        self.value = value
-        self.order_nr = order_nr
 
     def clone(self):
         cls = type(self)
@@ -75,8 +72,13 @@ class Variable(object):
         return {
             'linenos': [node.lineno],
             'label': node.name if isinstance(node, nodes.Name) else None,
-            'value': node.value if hasattr(node, 'value') else None,
         }
+
+    def _get_vals(self):
+      return str(self.linenos) + ', ' + str(self.label) + ', ' + str(self.constant) + ', ' + str(self.used_with_default) + ', ' + str(self.checked_as_undefined) + ', ' + str(self.checked_as_defined) + ', ' + str(self.required)
+
+    def is_unknown(Self):
+      return True
 
     @classmethod
     def from_node(cls, node, **kwargs):
@@ -105,15 +107,14 @@ class Variable(object):
             self.used_with_default == other.used_with_default and
             self.checked_as_undefined == other.checked_as_undefined and
             self.checked_as_defined == other.checked_as_defined and
-            self.required == other.required and
-            self.value == other.value
+            self.required == other.required
         )
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __repr__(self):
-      return '<unknown>'
+      return '<unknown>, ' + self._get_vals()
 
 
 class Dictionary(Variable):
@@ -140,7 +141,7 @@ class Dictionary(Variable):
         return super(Dictionary, self).__eq__(other) and self.data == other.data
 
     def __repr__(self):
-        return pprint.pformat(self.data)
+        return pprint.pformat(self.data) + ', ' + self._get_vals()
 
     def clone(self):
         rv = super(Dictionary, self).clone()
@@ -148,6 +149,9 @@ class Dictionary(Variable):
         for k, v in _compat.iteritems(self.data):
             rv.data[k] = v.clone()
         return rv
+
+    def is_unknown(Self):
+      return False
 
     @classmethod
     def from_node(cls, node, data=None, **kwargs):
@@ -203,12 +207,15 @@ class List(Variable):
         return super(List, self).__eq__(other) and self.items == other.items
 
     def __repr__(self):
-        return pprint.pformat([self.items])
+        return pprint.pformat([self.items]) + ', ' + self._get_vals()
 
     def clone(self):
         rv = super(List, self).clone()
         rv.items = self.items.clone()
         return rv
+
+    def is_unknown(Self):
+      return False
 
     @classmethod
     def from_node(cls, node, items, **kwargs):
@@ -236,12 +243,15 @@ class Tuple(Variable):
         return super(Tuple, self).__eq__(other) and self.items == other.items
 
     def __repr__(self):
-        return pprint.pformat(self.items)
+        return pprint.pformat(self.items) + ', ' + self._get_vals()
 
     def clone(self):
         rv = super(Tuple, self).clone()
         rv.items = self.items and tuple(s.clone() for s in self.items)
         return rv
+
+    def is_unknown(Self):
+      return False
 
     @classmethod
     def from_node(cls, node, items, **kwargs):
@@ -252,4 +262,7 @@ class Tuple(Variable):
 class Scalar(Variable):
     """A scalar. Either string, number, boolean or ``None``."""
     def __repr__(self):
-        return '<scalar>'
+        return '<scalar>, ' + self._get_vals()
+
+    def is_unknown(Self):
+      return False

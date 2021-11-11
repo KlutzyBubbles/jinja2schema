@@ -7,7 +7,7 @@ from jinja2schema.config import Config
 from jinja2schema.core import parse
 from jinja2schema.visitors.expr import (Context, visit_getitem, visit_cond_expr, visit_test,
                                         visit_getattr, visit_compare, visit_const)
-from jinja2schema.model import Dictionary, Scalar, List, Unknown, Number, Boolean, Tuple
+from jinja2schema.model import Dictionary, Scalar, List, Variable, Tuple
 
 
 def get_scalar_context(node):
@@ -90,7 +90,7 @@ def test_getattr_3():
             linenos=[1]
         ),
         'z': Scalar(label='z', linenos=[1]),
-        'n': Number(label='n', linenos=[2])
+        'n': Scalar(label='n', linenos=[2])
     })
     assert struct == expected_struct
 
@@ -138,9 +138,9 @@ def test_getitem_3():
 
     expected_struct = Dictionary({
         'a': Tuple([
-            Unknown(),
-            Unknown(),
-            Unknown(),
+            Variable(),
+            Variable(),
+            Variable(),
             Scalar(linenos=[1]),
         ], label='a', linenos=[1]),
     })
@@ -153,9 +153,9 @@ def test_compare_1():
     rtype, struct = visit_compare(node, get_scalar_context(node))
 
     expected_struct = Dictionary({
-        'a': Unknown(label='a', linenos=[1]),
-        'b': Unknown(label='b', linenos=[1]),
-        'c': Unknown(label='c', linenos=[1]),
+        'a': Variable(label='a', linenos=[1]),
+        'b': Variable(label='b', linenos=[1]),
+        'c': Variable(label='c', linenos=[1]),
     })
     assert struct == expected_struct
 
@@ -166,10 +166,10 @@ def test_compare_2():
     rtype, struct = visit_compare(node, get_scalar_context(node))
     # TODO make customizable
     expected_struct = Dictionary({
-        'a': Unknown(label='a', linenos=[1]),
-        'b': List(Unknown(linenos=[1]), label='b', linenos=[1]),
-        'c': Unknown(label='c', linenos=[1]),
-        'x': Unknown(label='x', linenos=[1]),
+        'a': Variable(label='a', linenos=[1]),
+        'b': List(Variable(linenos=[1]), label='b', linenos=[1]),
+        'c': Variable(label='c', linenos=[1]),
+        'x': Variable(label='x', linenos=[1]),
     })
     assert struct == expected_struct
 
@@ -180,8 +180,8 @@ def test_slice():
     rtype, struct = visit_getitem(node, get_scalar_context(node))
     assert struct == Dictionary({
         'xs': List(Scalar(linenos=[1]), label='xs', linenos=[1]),
-        'a': Number(label='a', linenos=[1]),
-        'b': Number(label='b', linenos=[1]),
+        'a': Scalar(label='a', linenos=[1]),
+        'b': Scalar(label='b', linenos=[1]),
     })
 
 
@@ -193,7 +193,7 @@ def test_test_1():
     expected_struct = Dictionary({
         'x': Scalar(label='x', linenos=[1]),
         'data': Dictionary({
-            'field': Number(label='field', linenos=[1]),
+            'field': Scalar(label='field', linenos=[1]),
         }, label='data', linenos=[1])
     })
 
@@ -215,22 +215,22 @@ def test_test_2():
     rtype, struct = visit_test(node, get_scalar_context(node))
 
     expected_struct = Dictionary({
-        'x': Unknown(label='x', linenos=[1])
+        'x': Variable(label='x', linenos=[1])
     })
     assert struct == expected_struct
 
-    template = '{{ x is unknown_filter }}'
+    template = '{{ x is variable_filter }}'
     node = parse(template).find(nodes.Test)
     with pytest.raises(InvalidExpression) as e:
         visit_test(node, get_scalar_context(node))
-    assert 'line 1: unknown test "unknown_filter"' in str(e.value)
+    assert 'line 1: variable test "variable_filter"' in str(e.value)
 
 
 def test_compare():
     template = '''{{ a < c }}'''
     compare_node = parse(template).find(nodes.Compare)
     rtype, struct = visit_compare(compare_node, get_scalar_context(compare_node))
-    expected_rtype = Boolean(linenos=[1])
+    expected_rtype = Scalar(linenos=[1])
     assert rtype == expected_rtype
 
 
@@ -238,4 +238,4 @@ def test_const():
     template = '''{{ false }}'''
     const_node = parse(template).find(nodes.Const)
     rtype, struct = visit_const(const_node, get_scalar_context(const_node))
-    assert rtype == Boolean(constant=True, linenos=[1], value=False)
+    assert rtype == Scalar(constant=True, linenos=[1], value=False)

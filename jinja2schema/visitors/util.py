@@ -13,7 +13,7 @@ def visit(node, macroses, config, predicted_struct_cls=Variable, return_struct_c
     if isinstance(node, jinja2.nodes.Stmt):
         structure = visit_stmt(node, macroses, config)
     elif isinstance(node, jinja2.nodes.Expr):
-        ctx = Context(predicted_struct=predicted_struct_cls.from_node(node, order_nr=config.ORDER_OBJECT.get_next()),
+        ctx = Context(predicted_struct=predicted_struct_cls.from_node(node),
                       return_struct_cls=return_struct_cls)
         _, structure = visit_expr(node, ctx, macroses, config)
     elif isinstance(node, jinja2.nodes.Template):
@@ -35,7 +35,7 @@ def visit_many(nodes, macroses, config, predicted_struct_cls=Variable, return_st
             structure = visit_extends(node, macroses, config, [x for x in nodes if isinstance(x, jinja2.nodes.Block)])
         else:
             structure = visit(node, macroses, config, predicted_struct_cls, return_struct_cls)
-        rv = merge(rv, structure)
+        rv = merge(structure, rv)
     return rv
 
 

@@ -2,7 +2,7 @@
 from jinja2schema.config import Config
 
 from jinja2schema.core import infer
-from jinja2schema.model import Dictionary, Scalar, Unknown, String, Boolean, Number
+from jinja2schema.model import Dictionary, Scalar, Variable
 
 
 def test_1():
@@ -25,9 +25,9 @@ def test_1():
     '''
     struct = infer(template)
     expected_struct = Dictionary({
-        'x': Unknown(label='x', checked_as_undefined=True, linenos=[2]),
+        'x': Variable(label='x', checked_as_undefined=True, linenos=[2]),
         'test': Scalar(label='test', linenos=[3]),
-        'y': Number(label='y', may_be_defined=True, linenos=[6, 7, 10, 11]),
+        'y': Scalar(label='y', may_be_defined=True, linenos=[6, 7, 10, 11]),
         'z': Scalar(label='z', linenos=[14, 15]),
     })
     assert struct == expected_struct
@@ -49,9 +49,9 @@ def test_2():
     '''
     struct = infer(template)
     expected_struct = Dictionary({
-        'x': String(linenos=[2, 3, 5], label='x',
+        'x': Scalar(linenos=[2, 3, 5], label='x',
                     constant=False, may_be_defined=True),
-        'y': String(linenos=[7, 10, 12], label='y',
+        'y': Scalar(linenos=[7, 10, 12], label='y',
                     constant=False, may_be_defined=True),
     })
     assert struct == expected_struct
@@ -65,14 +65,14 @@ def test_2():
     '''
     struct = infer(template)
     expected_struct = Dictionary({
-        'x': String(linenos=[2, 3, 4, 6], label='x',
+        'x': Scalar(linenos=[2, 3, 4, 6], label='x',
                     constant=False, may_be_defined=False),
     })
     assert struct == expected_struct
 
 
 def test_3():
-    config = Config(BOOLEAN_CONDITIONS=True)
+    config = Config(SCALAR_CONDITIONS=True)
     template = '''
     {%- if new_configuration is undefined %}
       {%- if production is defined and production %}
@@ -84,20 +84,20 @@ def test_3():
     '''
     struct = infer(template, config)
     expected_struct = Dictionary({
-        'new_configuration': String(label='new_configuration', may_be_defined=True, checked_as_undefined=True, linenos=[2, 4, 6]),
-        'production': Boolean(label='production', checked_as_defined=True, linenos=[3]),
-        'timestamp': String(label='timestamp', linenos=[4, 6]),
+        'new_configuration': Scalar(label='new_configuration', may_be_defined=True, checked_as_undefined=True, linenos=[2, 4, 6]),
+        'production': Scalar(label='production', checked_as_defined=True, linenos=[3]),
+        'timestamp': Scalar(label='timestamp', linenos=[4, 6]),
     })
     assert struct == expected_struct
 
 
 def test_4():
     template = '''{{ 'x and y' if x and y is defined else ':(' }}'''
-    config = Config(BOOLEAN_CONDITIONS=True)
+    config = Config(SCALAR_CONDITIONS=True)
     struct = infer(template, config)
     expected_struct = Dictionary({
-        'x': Boolean(label='x', linenos=[1]),
-        'y': Unknown(label='y', checked_as_defined=True, linenos=[1]),
+        'x': Scalar(label='x', linenos=[1]),
+        'y': Variable(label='y', checked_as_defined=True, linenos=[1]),
     })
     assert struct == expected_struct
 
@@ -109,7 +109,7 @@ def test_4():
     struct = infer(template, config)
     expected_struct = Dictionary({
         'x': Dictionary({
-            'a': Unknown(label='a', linenos=[2]),
+            'a': Variable(label='a', linenos=[2]),
             'b': Scalar(label='b', linenos=[3]),
 
         }, label='x', checked_as_defined=True, linenos=[2, 3])
@@ -124,7 +124,7 @@ def test_4():
     struct = infer(template, config)
     expected_struct = Dictionary({
         'x': Dictionary({
-            'a': Unknown(label='a', linenos=[2]),
+            'a': Variable(label='a', linenos=[2]),
             'b': Scalar(label='b', linenos=[3]),
 
         }, label='x', linenos=[2, 3])
