@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 jinja2schema.model
 ~~~~~~~~~~~~~~~~~~
